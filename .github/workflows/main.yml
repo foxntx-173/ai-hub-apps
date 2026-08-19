@@ -1,5 +1,5 @@
 # ==========================================
-# VERSION DU CODE : v2.8-CACHED-GRADLE920-NODE24-SCAN
+# VERSION DU CODE : v2.9-CACHED-GRADLE920-NODE24-SCAN
 # ==========================================
 name: Build All Android APKs
 
@@ -53,7 +53,7 @@ jobs:
           fi
           export PATH="$PWD/gradle-9.2.0/bin:$PATH"
           
-          # Vérification des versions actives
+          # Vérification explicite des versions actives dans le runner
           node -v
           gradle -v
           
@@ -67,3 +67,4 @@ jobs:
         with:
           name: geniex-chat-apk
           path: '**/build/outputs/apk/debug/*.apk'
+          

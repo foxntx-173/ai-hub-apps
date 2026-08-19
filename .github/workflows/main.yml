@@ -1,5 +1,5 @@
 # ==========================================
-# VERSION DU CODE : v2.9-CACHED-GRADLE920-NODE24-SCAN
+# VERSION DU CODE : v3.0-BUILD-ALL-APKS
 # ==========================================
 name: Build All Android APKs
 
@@ -35,36 +35,46 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-9.2.0-
 
-      - name: Install Gradle 9.2.0 Binaries & Build with Scan/Debug
+      - name: Install Gradle 9.2.0 Binaries
         run: |
-          cd geniex_chat_android
-          
-          # Contournement du fichier partagé
-          mkdir -p _shared/android
-          touch _shared/android/common.gradle
-          
-          # Téléchargement manuel conditionnel avec le nom de version exact (9.2.0)
           if [ ! -d "gradle-9.2.0" ]; then
-            echo "Gradle 9.2.0 non trouvé localement ou dans le cache distant. Téléchargement en cours..."
+            echo "Téléchargement de Gradle 9.2.0..."
             wget https://services.gradle.org/distributions/gradle-9.2.0-bin.zip
             unzip -q gradle-9.2.0-bin.zip
-          else
-            echo "Gradle 9.2.0 détecté via le cache."
           fi
-          export PATH="$PWD/gradle-9.2.0/bin:$PATH"
-          
-          # Vérification explicite des versions actives dans le runner
-          node -v
-          gradle -v
-          
-          # Compilation avec le wrapper et les options d'information, debug et scan
-          gradle wrapper --gradle-version 9.2.0
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --info --debug --scan
+          echo "$PWD/gradle-9.2.0/bin" >> $GITHUB_PATH
 
-      - name: Upload APK as Artifact
+      - name: Build All Android Projects
+        run: |
+          # Recherche de tous les sous-dossiers contenant un fichier build.gradle ou build.gradle.kts
+          for dir in $(find . -maxdepth 2 -name "build.gradle" -o -name "build.gradle.kts" | xargs -n1 dirname); do
+            if [ "$dir" != "." ]; then
+              echo "===================================================="
+              echo "Compilation du projet dans : $dir"
+              echo "===================================================="
+              
+              cd "$dir"
+              
+              # Contournement éventuel du fichier partagé si nécessaire
+              mkdir -p _shared/android
+              touch _shared/android/common.gradle
+              
+              # Configuration et build
+              gradle wrapper --gradle-version 9.2.0 || true
+              if [ -f "gradlew" ]; then
+                chmod +x gradlew
+                ./gradlew assembleDebug --no-daemon --info
+              else
+                gradle assembleDebug --no-daemon --info
+              fi
+              
+              cd - > /dev/null
+            fi
+          done
+
+      - name: Upload All APKs as Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: geniex-chat-apk
+          name: all-android-apks
           path: '**/build/outputs/apk/debug/*.apk'
           

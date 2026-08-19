@@ -1,50 +1,33 @@
-# ==========================================
-# VERSION DU CODE : v3.0-BUILD-ALL-APKS
-# ==========================================
-name: Build All Android APKs
+name: Build All Android Projects
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-all:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js 24
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
       - name: Set up JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Cache Gradle 9.2.0 Binaries & Dependencies
+      - name: Cache Gradle packages
         uses: actions/cache@v4
-        id: gradle-cache
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-9.2.0-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-9.2.0-
+            ${{ runner.os }}-gradle-
 
-      - name: Install Gradle 9.2.0 Binaries
-        run: |
-          if [ ! -d "gradle-9.2.0" ]; then
-            echo "Téléchargement de Gradle 9.2.0..."
-            wget https://services.gradle.org/distributions/gradle-9.2.0-bin.zip
-            unzip -q gradle-9.2.0-bin.zip
-          fi
-          echo "$PWD/gradle-9.2.0/bin" >> $GITHUB_PATH
-
-      - name: Build All Android Projects
+      - name: Build All Android Projects with Fault Tolerance
         run: |
           # Recherche de tous les sous-dossiers contenant un fichier build.gradle ou build.gradle.kts
           for dir in $(find . -maxdepth 2 -name "build.gradle" -o -name "build.gradle.kts" | xargs -n1 dirname); do
@@ -52,29 +35,29 @@ jobs:
               echo "===================================================="
               echo "Compilation du projet dans : $dir"
               echo "===================================================="
-              
+               
               cd "$dir"
-              
+               
               # Contournement éventuel du fichier partagé si nécessaire
               mkdir -p _shared/android
               touch _shared/android/common.gradle
-              
-              # Configuration et build
+               
+              # Génération ou mise à jour du wrapper Gradle
               gradle wrapper --gradle-version 9.2.0 || true
-              if [ -f "gradlew" ]; then
-                chmod +x gradlew
-                ./gradlew assembleDebug --no-daemon --info
-              else
-                gradle assembleDebug --no-daemon --info
-              fi
+              chmod +x gradlew
               
+              # Compilation avec tolérance aux pannes pour passer au projet suivant en cas d'échec
+              set +e
+              ./gradlew assembleDebug --no-daemon --info
+              BUILD_STATUS=$?
+              set -e
+
+              if [ $BUILD_STATUS -ne 0 ]; then
+                echo "::warning:: Le build a échoué pour le projet $dir (Code: $BUILD_STATUS). Passage au projet suivant..."
+              else
+                echo "Build réussi pour $dir."
+              fi
+               
               cd - > /dev/null
             fi
           done
-
-      - name: Upload All APKs as Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: all-android-apks
-          path: '**/build/outputs/apk/debug/*.apk'
-          

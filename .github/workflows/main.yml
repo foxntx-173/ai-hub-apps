@@ -19,18 +19,18 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Cache Gradle 8.8 Binaries & Dependencies
+      - name: Cache Gradle 8.9 Binaries & Dependencies
         uses: actions/cache@v4
         id: gradle-cache
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-8.8-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-8.9-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-8.8-
+            ${{ runner.os }}-gradle-8.9-
 
-      - name: Install Gradle 8.8 Binaries & Build with Scan/Debug
+      - name: Install Gradle 8.9 Binaries & Build with Scan/Debug
         run: |
           cd geniex_chat_android
           
@@ -39,14 +39,14 @@ jobs:
           touch _shared/android/common.gradle
           
           # Téléchargement manuel conditionnel si le binaire n'est pas déjà présent via le cache
-          if [ ! -d "gradle-8.8" ]; then
-            echo "Gradle 8.8 non trouvé localement ou dans le cache distant. Téléchargement en cours..."
-            wget https://services.gradle.org/distributions/gradle-8.8-bin.zip
-            unzip -q gradle-8.8-bin.zip
+          if [ ! -d "gradle-8.9" ]; then
+            echo "Gradle 8.9 non trouvé localement ou dans le cache distant. Téléchargement en cours..."
+            wget https://services.gradle.org/distributions/gradle-8.9-bin.zip
+            unzip -q gradle-8.9-bin.zip
           else
-            echo "Gradle 8.8 détecté via le cache."
+            echo "Gradle 8.9 détecté via le cache."
           fi
-          export PATH="$PWD/gradle-8.8/bin:$PATH"
+          export PATH="$PWD/gradle-8.9/bin:$PATH"
           
           # Vérification de la version active
           gradle -v

@@ -1,5 +1,5 @@
 # ==========================================
-# VERSION DU CODE : v2.6-CACHED-GRADLE92-SCAN
+# VERSION DU CODE : v2.7-CACHED-GRADLE920-SCAN
 # ==========================================
 name: Build All Android APKs
 
@@ -19,18 +19,18 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Cache Gradle 9.2 Binaries & Dependencies
+      - name: Cache Gradle 9.2.0 Binaries & Dependencies
         uses: actions/cache@v4
         id: gradle-cache
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-9.2-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-9.2.0-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-9.2-
+            ${{ runner.os }}-gradle-9.2.0-
 
-      - name: Install Gradle 9.2 Binaries & Build with Scan/Debug
+      - name: Install Gradle 9.2.0 Binaries & Build with Scan/Debug
         run: |
           cd geniex_chat_android
           
@@ -38,21 +38,21 @@ jobs:
           mkdir -p _shared/android
           touch _shared/android/common.gradle
           
-          # Téléchargement manuel conditionnel si Gradle 9.2 n'est pas déjà présent via le cache
-          if [ ! -d "gradle-9.2" ]; then
-            echo "Gradle 9.2 non trouvé localement ou dans le cache distant. Téléchargement en cours..."
-            wget https://services.gradle.org/distributions/gradle-9.2-bin.zip
-            unzip -q gradle-9.2-bin.zip
+          # Téléchargement manuel conditionnel avec le nom de version exact (9.2.0)
+          if [ ! -d "gradle-9.2.0" ]; then
+            echo "Gradle 9.2.0 non trouvé localement ou dans le cache distant. Téléchargement en cours..."
+            wget https://services.gradle.org/distributions/gradle-9.2.0-bin.zip
+            unzip -q gradle-9.2.0-bin.zip
           else
-            echo "Gradle 9.2 détecté via le cache."
+            echo "Gradle 9.2.0 détecté via le cache."
           fi
-          export PATH="$PWD/gradle-9.2/bin:$PATH"
+          export PATH="$PWD/gradle-9.2.0/bin:$PATH"
           
           # Vérification de la version active
           gradle -v
           
           # Compilation avec le wrapper et les options d'information, debug et scan
-          gradle wrapper --gradle-version 9.2
+          gradle wrapper --gradle-version 9.2.0
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --info --debug --scan
 

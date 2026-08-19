@@ -1,5 +1,5 @@
 # ==========================================
-# VERSION DU CODE : v2.5-CACHED-GRADLE88-SCAN
+# VERSION DU CODE : v2.6-CACHED-GRADLE92-SCAN
 # ==========================================
 name: Build All Android APKs
 
@@ -19,18 +19,18 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Cache Gradle 8.9 Binaries & Dependencies
+      - name: Cache Gradle 9.2 Binaries & Dependencies
         uses: actions/cache@v4
         id: gradle-cache
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-8.9-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-9.2-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-8.9-
+            ${{ runner.os }}-gradle-9.2-
 
-      - name: Install Gradle 8.9 Binaries & Build with Scan/Debug
+      - name: Install Gradle 9.2 Binaries & Build with Scan/Debug
         run: |
           cd geniex_chat_android
           
@@ -38,21 +38,21 @@ jobs:
           mkdir -p _shared/android
           touch _shared/android/common.gradle
           
-          # Téléchargement manuel conditionnel si le binaire n'est pas déjà présent via le cache
-          if [ ! -d "gradle-8.9" ]; then
-            echo "Gradle 8.9 non trouvé localement ou dans le cache distant. Téléchargement en cours..."
-            wget https://services.gradle.org/distributions/gradle-8.9-bin.zip
-            unzip -q gradle-8.9-bin.zip
+          # Téléchargement manuel conditionnel si Gradle 9.2 n'est pas déjà présent via le cache
+          if [ ! -d "gradle-9.2" ]; then
+            echo "Gradle 9.2 non trouvé localement ou dans le cache distant. Téléchargement en cours..."
+            wget https://services.gradle.org/distributions/gradle-9.2-bin.zip
+            unzip -q gradle-9.2-bin.zip
           else
-            echo "Gradle 8.9 détecté via le cache."
+            echo "Gradle 9.2 détecté via le cache."
           fi
-          export PATH="$PWD/gradle-8.9/bin:$PATH"
+          export PATH="$PWD/gradle-9.2/bin:$PATH"
           
           # Vérification de la version active
           gradle -v
           
           # Compilation avec le wrapper et les options d'information, debug et scan
-          gradle wrapper --gradle-version 8.8
+          gradle wrapper --gradle-version 9.2
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --info --debug --scan
 
@@ -61,4 +61,3 @@ jobs:
         with:
           name: geniex-chat-apk
           path: '**/build/outputs/apk/debug/*.apk'
-          

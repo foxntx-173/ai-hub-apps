@@ -53,6 +53,9 @@ jobs:
           node -v
           gradle -v
 
+          # Création d'un dossier central pour rassembler et renommer les APKs
+          mkdir -p deployed_apks
+
           # Recherche et compilation de tous les sous-dossiers contenant un build.gradle ou build.gradle.kts
           for dir in $(find . -maxdepth 2 -name "build.gradle" -o -name "build.gradle.kts" | xargs -n1 dirname); do
             if [ "$dir" != "." ]; then
@@ -61,6 +64,7 @@ jobs:
               echo "===================================================="
               
               cd "$dir"
+              PROJECT_NAME=$(basename "$dir")
               
               # Contournement du fichier partagé
               mkdir -p _shared/android
@@ -76,6 +80,10 @@ jobs:
                 echo "::warning:: Le build a échoué pour le projet $dir (Code: $BUILD_STATUS). Passage au projet suivant..."
               else
                 echo "Build réussi pour $dir."
+                # Copie et renommage explicite de l'APK généré avec le nom du projet
+                if ls build/outputs/apk/debug/*.apk 1> /dev/null 2>&1; then
+                  cp build/outputs/apk/debug/*.apk ../deployed_apks/${PROJECT_NAME}-debug.apk
+                fi
               fi
               
               cd - > /dev/null
@@ -86,5 +94,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: all-android-apks
-          path: '**/build/outputs/apk/debug/*.apk'
+          path: deployed_apks/*.apk
           

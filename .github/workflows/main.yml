@@ -1,0 +1,64 @@
+# ==========================================
+# VERSION DU CODE : v2.5-CACHED-GRADLE88-SCAN
+# ==========================================
+name: Build All Android APKs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-all:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Cache Gradle 8.8 Binaries & Dependencies
+        uses: actions/cache@v4
+        id: gradle-cache
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-8.8-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-8.8-
+
+      - name: Install Gradle 8.8 Binaries & Build with Scan/Debug
+        run: |
+          cd geniex_chat_android
+          
+          # Contournement du fichier partagé
+          mkdir -p _shared/android
+          touch _shared/android/common.gradle
+          
+          # Téléchargement manuel conditionnel si le binaire n'est pas déjà présent via le cache
+          if [ ! -d "gradle-8.8" ]; then
+            echo "Gradle 8.8 non trouvé localement ou dans le cache distant. Téléchargement en cours..."
+            wget https://services.gradle.org/distributions/gradle-8.8-bin.zip
+            unzip -q gradle-8.8-bin.zip
+          else
+            echo "Gradle 8.8 détecté via le cache."
+          fi
+          export PATH="$PWD/gradle-8.8/bin:$PATH"
+          
+          # Vérification de la version active
+          gradle -v
+          
+          # Compilation avec le wrapper et les options d'information, debug et scan
+          gradle wrapper --gradle-version 8.8
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --info --debug --scan
+
+      - name: Upload APK as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: geniex-chat-apk
+          path: '**/build/outputs/apk/debug/*.apk'
+          
